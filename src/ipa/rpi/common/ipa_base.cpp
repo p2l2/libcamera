@@ -1611,6 +1611,10 @@ void IpaBase::reportMetadata(unsigned int ipaContext)
 	if (luxStatus)
 		libcameraMetadata_.set(controls::Lux, luxStatus->lux);
 
+	int32_t *audiovisEmbeddedValue = rpiMetadata.getLocked<int32_t>("audiovis.embedded_value");
+	if (audiovisEmbeddedValue)
+		libcameraMetadata_.set(controls::rpi::AudiovisEmbeddedValue, *audiovisEmbeddedValue);
+
 	AwbStatus *awbStatus = rpiMetadata.getLocked<AwbStatus>("awb.status");
 	if (awbStatus) {
 		libcameraMetadata_.set(controls::ColourGains, { static_cast<float>(awbStatus->gainR),

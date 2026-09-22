@@ -5,9 +5,19 @@
  * camera helper for the p2l2 audiovis FPGA camera
  */
 
+#include <iomanip>
+#include <sstream>
+
+#include <libcamera/base/log.h>
+
 #include "cam_helper.h"
 
 using namespace RPiController;
+using namespace libcamera;
+
+namespace libcamera {
+LOG_DECLARE_CATEGORY(IPARPI)
+}
 
 /*
  * Same FPGA control philosophy as p2l2vis (see cam_helper_p2l2_vis.cpp
@@ -24,6 +34,8 @@ public:
 	CamHelperP2L2Audiovis();
 	uint32_t gainCode(double gain) const override;
 	double gain(uint32_t gainCode) const override;
+	bool sensorEmbeddedDataPresent() const override;
+	void prepare(Span<const uint8_t> buffer, Metadata &metadata) override;
 
 private:
 	/*
@@ -58,6 +70,40 @@ double CamHelperP2L2Audiovis::gain(uint32_t gainCode) const
 static CamHelper *create()
 {
 	return new CamHelperP2L2Audiovis();
+}
+
+bool CamHelperP2L2Audiovis::sensorEmbeddedDataPresent() const
+{
+	return true;
+}
+
+/*
+ * No MdParser exists yet for this FPGA's embedded data layout (MdParserSmia
+ * only understands Sony's SMIA/CCS register-dump tag format), so just dump
+ * the raw buffer to confirm data is arriving and inspect its content -
+ * replace this with real register parsing once the layout is known.
+ */
+void CamHelperP2L2Audiovis::prepare(Span<const uint8_t> buffer, Metadata &metadata)
+{
+	if (buffer.empty()) {
+		LOG(IPARPI, Warning) << "No embedded data buffer received";
+		return;
+	}
+
+	std::ostringstream oss;
+	for (uint8_t byte : buffer.first(std::min<size_t>(buffer.size(), 512)))
+		oss << std::hex << std::setw(2) << std::setfill('0') << static_cast<unsigned int>(byte) << ' ';
+
+	LOG(IPARPI, Info) << "Embedded data buffer (" << buffer.size() << " bytes): " << oss.str();
+
+	/* First 4 bytes, little-endian - see controls::rpi::AudiovisEmbeddedValue. */
+	if (buffer.size() >= 4) {
+		uint32_t bits = static_cast<uint32_t>(buffer[0]) |
+				 (static_cast<uint32_t>(buffer[1]) << 8) |
+				 (static_cast<uint32_t>(buffer[2]) << 16) |
+				 (static_cast<uint32_t>(buffer[3]) << 24);
+		metadata.set("audiovis.embedded_value", static_cast<int32_t>(bits));
+	}
 }
 
 /*
