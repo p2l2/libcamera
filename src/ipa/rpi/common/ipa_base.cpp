@@ -1614,6 +1614,12 @@ void IpaBase::reportMetadata(unsigned int ipaContext)
 	int32_t *audiovisEmbeddedValue = rpiMetadata.getLocked<int32_t>("audiovis.embedded_value");
 	if (audiovisEmbeddedValue)
 		libcameraMetadata_.set(controls::rpi::AudiovisEmbeddedValue, *audiovisEmbeddedValue);
+	int32_t *audiovisHighestBit = rpiMetadata.getLocked<int32_t>("audiovis.highest_bit");
+	if (audiovisHighestBit)
+		libcameraMetadata_.set(controls::rpi::AudiovisHighestBit, *audiovisHighestBit);
+	int32_t *audiovisPeakIndex = rpiMetadata.getLocked<int32_t>("audiovis.peak_index");
+	if (audiovisPeakIndex)
+		libcameraMetadata_.set(controls::rpi::AudiovisPeakIndex, *audiovisPeakIndex);
 
 	AwbStatus *awbStatus = rpiMetadata.getLocked<AwbStatus>("awb.status");
 	if (awbStatus) {
