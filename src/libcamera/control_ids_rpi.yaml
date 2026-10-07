@@ -314,8 +314,9 @@ controls:
       direction: out
       description: |
         Peak value of the frame: bytes 0..3 of the p2l2-audiovis FPGA's
-        per-frame CSI-2 embedded-data buffer (256 bytes total), the Q16.16
-        beamformer power of the brightest pixel. Decoded as a little-endian
+        per-frame CSI-2 embedded-data buffer (256 bytes total), the unsigned
+        Q9.23 beamformer power of the brightest pixel (power = value / 2^23,
+        so values >= 2^31 come out negative here). Decoded as a little-endian
         uint32 and reinterpreted as int32_t (the Python bindings in this
         libcamera version don't support ControlTypeUnsigned32). Only present
         for the p2l2-audiovis camera.
@@ -326,8 +327,8 @@ controls:
       description: |
         Slicer window of the frame: bytes 4..7 of the p2l2-audiovis embedded
         data, little endian. Each 10 bit pixel holds bits
-        [highest_bit : highest_bit - 9] of the Q16.16 beamformer power, so
-        power = pixel << (highest_bit - 9). Only present for the
+        [highest_bit : highest_bit - 9] of the Q9.23 beamformer power, so
+        power = (pixel << (highest_bit - 9)) / 2^23. Only present for the
         p2l2-audiovis camera.
 
   - AudiovisPeakIndex:
